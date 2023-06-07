@@ -20,7 +20,7 @@ import analogio
 # === 外部库 ====
 import adafruit_ahtx0
 import adafruit_bh1750
-import adafruit_minimqtt.adafruit_minimqtt as MQTT
+#import adafruit_minimqtt.adafruit_minimqtt as MQTT
 import adafruit_ntp
 from adafruit_display_text import label
 from adafruit_st7735r import ST7735R
@@ -99,33 +99,33 @@ showSplash()
 time.sleep(1)
 
 # #### MQTT配置 ####
-MQTT_HOST = "192.168.99.7"
-MQTT_PORT = 1883
-MQTT_USER = "gardener"
-MQTT_PASSWORD = "53bffe07f84e0c5909ff569bb2a848e7"
-MQTT_SUB_TOPIC = "/garden/notify"
-MQTT_PUB_TOPIC = "/garden/notify"
+#MQTT_HOST = "192.168.99.7"
+#MQTT_PORT = 1883
+#MQTT_USER = "gardener"
+#MQTT_PASSWORD = "53bffe07f84e0c5909ff569bb2a848e7"
+#MQTT_SUB_TOPIC = "/garden/notify"
+#MQTT_PUB_TOPIC = "/garden/notify"
 
 
 # Define callback methods which are called when events occur
 # pylint: disable=unused-argument, redefined-outer-name
-def connected(client, userdata, flags, rc):
-    # This function will be called when the client is connected
-    # successfully to the broker.
-    print("Connected to Adafruit IO! Listening for topic changes on %s" % MQTT_SUB_TOPIC)
-    # Subscribe to all changes on the onoff_feed.
-    client.subscribe(MQTT_SUB_TOPIC)
-
-
-def disconnected(client, userdata, rc):
-    # This method is called when the client is disconnected
-    print("Disconnected from Adafruit IO!")
-
-
-def message(client, topic, message):
-    # This method is called when a topic the client is subscribed to
-    # has a new message.
-    print("New message on topic {0}: {1}".format(topic, message))
+#def connected(client, userdata, flags, rc):
+#    # This function will be called when the client is connected
+#    # successfully to the broker.
+#    print("Connected to Adafruit IO! Listening for topic changes on %s" % MQTT_SUB_TOPIC)
+#    # Subscribe to all changes on the onoff_feed.
+#    client.subscribe(MQTT_SUB_TOPIC)
+#
+#
+#def disconnected(client, userdata, rc):
+#    # This method is called when the client is disconnected
+#    print("Disconnected from Adafruit IO!")
+#
+#
+#def message(client, topic, message):
+#    # This method is called when a topic the client is subscribed to
+#    # has a new message.
+#    print("New message on topic {0}: {1}".format(topic, message))
 
 
 # Create a socket pool
@@ -133,27 +133,27 @@ pool = socketpool.SocketPool(wifi.radio)
 ssl_context = ssl.create_default_context()
 
 # Set up a MiniMQTT Client
-mqtt_client = MQTT.MQTT(
-    broker=MQTT_HOST,
-    port=MQTT_PORT,
-    username=MQTT_USER,
-    password=MQTT_PASSWORD,
-    socket_pool=pool,
-    ssl_context=ssl_context,
-)
+#mqtt_client = MQTT.MQTT(
+#    broker=MQTT_HOST,
+#    port=MQTT_PORT,
+#    username=MQTT_USER,
+#    password=MQTT_PASSWORD,
+#    socket_pool=pool,
+#    ssl_context=ssl_context,
+#)
 
 # Setup the callback methods above
-mqtt_client.on_connect = connected
-mqtt_client.on_disconnect = disconnected
-mqtt_client.on_message = message
+#mqtt_client.on_connect = connected
+#mqtt_client.on_disconnect = disconnected
+#mqtt_client.on_message = message
 
 # Connect the client to the MQTT broker.
-print("Connecting to MQTT ...")
-mqtt_client.connect()
+#print("Connecting to MQTT ...")
+#mqtt_client.connect()
 
 
 # #### NTP时间同步配置 ####
-ntp = adafruit_ntp.NTP(pool, tz_offset=0, server="ntp1.aliyun.com", socket_timeout=5)
+ntp = adafruit_ntp.NTP(pool, tz_offset=8, server="ntp1.aliyun.com", socket_timeout=5)
 
 def updateTimeByNTP():
     r = rtc.RTC()
@@ -174,10 +174,10 @@ font = terminalio.FONT
 labelIp = label.Label(font, text="255.255.255.255", color=0x333333, x=10, y=12)
 # 空气温湿度信息
 labelTemp = label.Label(font, text="TEMP: 00.0C 100%", color=0x333333, x=10, y=24)
-# 土壤湿度信息
-labelEarthHumi = label.Label(font, text="EARTH: 00000 3.3V", color=0x333333, x=10, y=36)
 # 光照
-labelLight = label.Label(font, text="Light: 9999.99lux", color=0x333333, x=10, y=48)
+labelLight = label.Label(font, text="Light: 9999.99lux", color=0x333333, x=10, y=36)
+# 时间
+labelTime = label.Label(font, text="20:30:33", color=0x333333, x=10, y=48)
 
 # 温度曲线图表
 line_color = 0xffffff
@@ -210,8 +210,8 @@ bounding_rectangle = Rect(
 
 mainUi.append(labelIp)
 mainUi.append(labelTemp)
-mainUi.append(labelEarthHumi)
 mainUi.append(labelLight)
+mainUi.append(labelTime)
 mainUi.append(spkline)
 mainUi.append(text_label1a)
 mainUi.append(text_label1b)
@@ -230,11 +230,11 @@ for i in range(total_ticks + 1):
 display.show(mainUi)
 
 # ADC输入初始化（土壤湿度）
-adcPin = analogio.AnalogIn(board.A0)
+#adcPin = analogio.AnalogIn(board.A0)
 
 while True:
     # 轮询MQTT消息
-    mqtt_client.loop()
+    #mqtt_client.loop()
 
     if loopCounter > 86400:
         loopCounter = 1
@@ -246,7 +246,6 @@ while True:
     clientId = wifi.radio.hostname
     ip = wifi.radio.ipv4_address
     now = time.time()
-    json = f'{{"clientId": "{clientId}", "ip": "{ip}", "earthHumi": {adcPin.value}, "airTemp": {tempSensor.temperature}, "airHumi": {tempSensor.relative_humidity}, "light": {luxSensor.lux}, "time": {now} }}'
 
 
     # 打印调试信息
@@ -254,8 +253,7 @@ while True:
     print("Temperature: %0.1f C" % tempSensor.temperature)
     print("Humidity: %0.1f %%" % tempSensor.relative_humidity)
     print("Light: %.2f Lux" % luxSensor.lux)
-    print(f"ADC A0 vlaue: {adcPin.value} {adcPin.reference_voltage}V")
-    print(json)
+    #print(f"ADC A0 vlaue: {adcPin.value} {adcPin.reference_voltage}V")
 
     # 更新图表
     spkline.add_value(tempSensor.temperature)
@@ -265,12 +263,13 @@ while True:
     # 更新上半屏信息
     labelIp.text = f'IP: {ip}'
     labelTemp.text = "TEMP: %.1fC / %.1f%%" % (tempSensor.temperature, tempSensor.relative_humidity)
-    labelEarthHumi.text = "EARTH: %d %.2fV" % (adcPin.value, adcPin.value / 65535 * adcPin.reference_voltage)
     labelLight.text = "Light: %.3f Lux" % luxSensor.lux
+    tm = time.localtime()
+    labelTime.text = "%02d-%02d %02d:%02d:%02d" % (tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec)
 
     # 每分钟一次，发送到MQTT
-    if loopCounter % 60 == 0:
-        mqtt_client.publish(MQTT_PUB_TOPIC, json)
+    #if loopCounter % 60 == 0:
+    #   mqtt_client.publish(MQTT_PUB_TOPIC, json)
 
     loopCounter += 1
 
